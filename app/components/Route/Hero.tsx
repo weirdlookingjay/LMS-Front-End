@@ -12,6 +12,7 @@ const Hero: FC<Props> = (props) => {
       <div className="1000px:w-[40%] flex 1000px:min-h-screen items-center justify-end pt-[70px] 1000px:pt-[0] z-10">
         <Image
           src={require("../../../public/assets/banner-img-1.png")}
+          priority={true}
           alt=""
           className="object-contain 1100px:max-w-[90%] 1500px:max-w-[85%] h-[auto] z-[10]"
         />
