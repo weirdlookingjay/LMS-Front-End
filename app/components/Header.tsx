@@ -9,6 +9,15 @@ import CustomModal from "../utils/CustomModal";
 import Login from "./Auth/Login";
 import SignUp from "./Auth/SignUp";
 import Verification from "./Auth/Verification";
+import { useSelector } from "react-redux";
+import Image from "next/image";
+import avatar from "../../public/assets/avatar.png";
+import {
+  useLogOutQuery,
+  useSocialAuthMutation,
+} from "../../redux/features/auth/authApi";
+import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
 
 type Props = {
   open: boolean;
@@ -18,9 +27,29 @@ type Props = {
   setRoute: (route: string) => void;
 };
 
-const Header: FC<Props> = ({ activeItem, setOpen, open, setRoute, route }) => {
+const Header: FC<Props> = ({ activeItem, setOpen, route, open, setRoute }) => {
   const [active, setActive] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
+  const { user } = useSelector((state: any) => state.auth);
+  const { data } = useSession();
+  const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
+  const [logout, setLogout] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      if (data) {
+        socialAuth({
+          email: data?.user?.email,
+          name: data?.user?.name,
+          avatar: data?.user?.image,
+        });
+      }
+    }
+
+    if (isSuccess) {
+      toast.success("Login Successfully");
+    }
+  }, [data, user, socialAuth, isSuccess]);
 
   if (typeof window !== "undefined") {
     window.addEventListener("scroll", () => {
@@ -37,6 +66,16 @@ const Header: FC<Props> = ({ activeItem, setOpen, open, setRoute, route }) => {
       setOpenSidebar(false);
     }
   };
+
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div className="w-full relative">
@@ -68,14 +107,25 @@ const Header: FC<Props> = ({ activeItem, setOpen, open, setRoute, route }) => {
                   onClick={() => setOpenSidebar(true)}
                 />
               </div>
-              <HiOutlineUserCircle
-                size={25}
-                className="hidden 800px:block cursor-pointer dark:text-white text-black"
-                onClick={() => setOpen(true)}
-              />
+              {user ? (
+                <Link href={"/profile"}>
+                  <Image
+                    src={user.avatar ? user.avatar : avatar}
+                    alt=""
+                    className="w-[30px] h-[30px] rounded-full cursor-pointer"
+                  />
+                </Link>
+              ) : (
+                <HiOutlineUserCircle
+                  size={25}
+                  className="hidden 800px:block cursor-pointer dark:text-white text-black"
+                  onClick={() => setOpen(true)}
+                />
+              )}
             </div>
           </div>
         </div>
+
         {/* mobile sidebar */}
         {openSidebar && (
           <div
@@ -83,7 +133,11 @@ const Header: FC<Props> = ({ activeItem, setOpen, open, setRoute, route }) => {
             onClick={handleClose}
             id="screen"
           >
-            <div className="w-[70%] fixed z-[99999] h-screen bg-white dark:bg-slate-900 dark:bg-opacity-90 top-0 right-0">
+            <div
+              className="w-[70%] fixed z-[99999] h-screen bg-white dark:bg-slate-900 dark:bg-opacity-90 top-0 right-0"
+              onClick={handleClose}
+              id="screen"
+            >
               <NavItems activeItem={activeItem} isMobile={true} />
               <HiOutlineUserCircle
                 size={25}
